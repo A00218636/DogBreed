@@ -7,40 +7,84 @@
 
 import Foundation
 
-
-struct DogAPI {
-    private static var baseURL = URL(string: "https://dog.ceo/api/breeds/image/random")
+enum endPoint: String
+{
+    case Breeds = "https://dog.ceo/api/breeds/list/all"
+    case randomBreedPhoto = "https://dog.ceo/api/breed/hound/images/random"
     
-    private static let session: URLSession = {
+}
+struct DogAPIHelper
+
+{
+   static var session:URLSession = {
         let config = URLSessionConfiguration.default
         return URLSession(configuration: config)
     }()
     
-    static func fetchBreeds(completion: @escaping (String) -> Void){
-        guard let url = baseURL else {
-            preconditionFailure("baseURL was nil")
-        }
+    static func getBreeds(completion: @escaping (Breed) -> Void)
+    {
+        let url = URL(string: endPoint.Breeds.rawValue)!
         let request = URLRequest(url: url)
-        let task = session.dataTask(with: request){
-            (data, response, error) -> Void in
+        let task = session.dataTask(with: request)
+        {(data,respose,error) -> Void in
             
-            if let jsonData = data {
-                do {
-                    let jsonObject = try JSONSerialization.jsonObject(with: jsonData, options: [])
-                    
-                    print(jsonObject)
-                    
-                    guard
-                        let jsonDiction = jsonObject as? [AnyHashable:Any],
-                        let message = jsonDiction["message"] as? String
-                    else { preconditionFailure("error: cannot process json informaiton")}
-                    
-                    completion(message)
-                } catch let error {
-                    preconditionFailure("error: \(error)")
+            if let data = data
+            {
+            do{
+                let decoder = JSONDecoder()
+                let breeds = try decoder.decode(Breed.self, from: data)
+                
+                OperationQueue.main.addOperation {
+                    completion(breeds)
                 }
+                
+                //print(breeds.message)
             }
+            catch let error{
+                print("error occured \(error)")
+                
+            }
+            }
+            
         }
         task.resume()
     }
+    
+    static func getRandomPhoto(breed: String ,completion: @escaping (String) -> Void){
+        
+        let url1:String = "https://dog.ceo/api/breed/"
+        let url2:String = "/images/random"
+        
+        print(breed)
+        let urlFinal:String = "\(url1)\(breed)\(url2)"
+        
+        print(urlFinal)
+        
+        let url = URL(string: urlFinal)!
+        let request = URLRequest(url: url)
+        let task = session.dataTask(with: request)
+        {(data,respose,error) -> Void in
+            
+            if let data = data
+            {
+            do{
+                let decoder = JSONDecoder()
+                let imageURL = try decoder.decode(BreedPhoto.self, from: data)
+                
+                OperationQueue.main.addOperation {
+                    completion(imageURL.message)
+                }
+                
+                print(imageURL.message)
+            }
+            catch let error{
+                print("OOPS! There is an error. \(error)")
+                
+            }
+            }
+            
+        }
+        task.resume()
+    }
+
 }

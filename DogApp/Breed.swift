@@ -7,9 +7,17 @@
 
 import Foundation
 
+
+struct BreedInfo: Decodable {
+    let response: Breed
+}
+struct BreedPhoto: Decodable {
+    let status: String
+        let message: String
+}
 struct Breed: Codable{
     
-    let message: [String]
+    let message: Dictionary<String,[String]>
     let status: String
     
 }
